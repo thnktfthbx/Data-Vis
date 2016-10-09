@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+    <title>Tumor Explorer Demo (BETA 0.9.3)</title>
+    <link rel="stylesheet" type="text/css" href="parallel.css" />
+  </head>
+  <body>
+  
+  <div id="header">
+    <h1>Tumor Explorer Demo </h1>
+    <button title="Zoom in on selected data" id="keep-data" disabled="disabled">Keep</button>
+    <button title="Remove selected data" id="exclude-data" disabled="disabled">Exclude</button>
+    <button title="Export data as CSV" id="export-data">Export</button>
+    <div class="controls">
+      <strong id="rendered-count"></strong>/<strong id="selected-count"></strong><!--<strong id="data-count"></strong>-->
+      <div class="fillbar"><div id="selected-bar"><div id="rendered-bar">&nbsp;</div></div></div>
+      Lines at <strong id="opacity"></strong> opacity.
+      <span class="settings">
+        <button id="hide-ticks">Hide Ticks</button>
+        <button id="show-ticks" disabled="disabled">Show Ticks</button>
+        <button id="dark-theme">Dark</button>
+        <button id="light-theme" disabled="disabled">Light</button>
+      </span>
+    </div>
+    <div style="clear:both;"></div>
+  </div>  
+  
+  <div id="chart">
+    <canvas id="background"></canvas>
+    <canvas id="foreground"></canvas>
+    <canvas id="highlight"></canvas>
+    <canvas id="boxplotspace"></canvas>
+    <svg></svg>
+  </div>
+  
+  
+  <div id="wrap">
+    <div class="third" id="controls">
+      <div class="bright">
+        <h3>What is this?</h3>
+        <p>
+          A multidimensional explorer of <a href="tumor.csv">Tumor data</a>. It works in <a href="http://www.mozilla.org/en-US/firefox/new/" target="_blank">Firefox</a>. </p>
+        <p>
+          The parallel coordinates display the chosen expression values for different lymph node and tumor samples, colored by therapy. 
+        </p>
+      
+      <p>
+          The values displayed for expression values are mapped to a log(10) scale. 
+      </p>
+       
+		<p>
+		
+		</p><br/>
+      </div>
+
+        <div class="bright">
+        <h3>Contact</h3>
+          <p>
+            Data and experiment: Gregory Szeto (email: gszeto .at. umbc.edu)
+		</p>
+		
+		</div>
+		
+		      <div class="little-box">
+        <h3>Credits &amp; License</h3>
+   
+       <div class="bright">
+   
+          <p>
+          Visualization: Mai Elshehaly (email: mai .at. umbc.edu) and <a href="http://www.csee.umbc.edu/~jichen/Welcome.html">Jian Chen</a> 
+          </p>
+</div>
+
+          <p><p>
+        
+           <font size="0.5">
+          Vis inspired by <a href="http://bl.ocks.org/3150059">a program </a> from Kai Chang.<br/>
+          </font>
+
+          <p>
+        </p>
+      </div>
+	  
+    </div>
+    <div  class="third">
+      <small>
+        <!--Last rendered <strong id="render-speed"></strong> lines-->
+      </small>
+	  	<p><br/>
+		
+		</p>
+
+      <h3>Therapy</h3>
+      <p id="legend">
+      </p>
+	  
+	  <div class="bright">
+	  <br/>
+        <h3>Interaction</h3>
+        <p>
+	
+		</p>
+		<p>
+		  <strong><a href="http://eagereyes.org/techniques/parallel-coordinates#brushing" target="_blank">Brush</a></strong>: Click and drag vertically along an axis.<br/>
+          <strong>Remove Brush</strong>: Tap the axis background.<br/>
+          <strong>Reorder Axes</strong>: Drag a label horizontally.<br/>
+          <strong>Remove Axis</strong>: Drag axis label to the edge of the screen.<br/>
+		  <br/>
+		  <strong>Hide/Show Therapy</strong>: Click on its name (above).<br/>
+          <strong>Show Member Pattern</strong>: Hover over member number (right).<br/>
+		  <strong>Export Selection as Table</strong>: Click the Export button to open a new browser tab with the raw data in csv format. 
+        </p>
+      </div>
+
+	  
+    </div>
+    <div class="third">
+      <h3>All Samples of 108 members <br/><input type="text" size="36" id="search" placeholder="Search by member number"></input></h3>
+	  <p>
+	  If your selection has less than 100 members, all will be shown. Otherwise, a random sample of 100 members from the selection will be shown. A table showing all data in your selection is available via the <i>Export</i> button.
+	  </p>
+      <p id="clinic-list">
+      </p>
+    </div>
+  </div>
+  
+  
+  </body>
+  <script src="d3.min.js"></script>
+  <script src="underscore.js"></script>
+  <script src="box.js"></script>
+  <script src="parallel - testing.js"></script>
+</html>
