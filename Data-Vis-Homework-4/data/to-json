@@ -1,0 +1,118 @@
+#!/usr/bin/env node
+
+const fs         = require("fs")
+const d3         = require("d3")
+const assignWith = require("lodash/assignWith")
+const isNull     = require("lodash/isNull")
+const flow       = require("lodash/flow")
+const sortBy     = require("lodash/sortBy")
+const mapValues  = require("lodash/mapValues")
+const assign     = require("lodash/assign")
+const some       = require("lodash/some")
+const fromPairs  = require("lodash/fromPairs")
+const values     = require("lodash/values")
+const findIndex  = require("lodash/findIndex")
+const assert     = require("assert")
+
+// Read the data
+const FILE = "./ehr-raw.csv"
+const text = fs.readFileSync(FILE, { encoding : "utf8" })
+const rows = d3.csvParse(text)
+
+const DEFAULTED = "No valid match found.  Defaulted"
+const normalizeGender = ({ gender }) => gender === DEFAULTED ? null : gender.toLowerCase()
+const normalizeFlag   = flag =>
+  flag === "0" || flag === "N" ? false :
+  flag === "1" || flag === "Y" ? true  : null
+
+const symptoms = [
+  "stress",
+  "ptsd",
+  "speech",
+  "anxiety",
+  "depression",
+  "headache",
+  "sleep",
+  "audiology",
+  "vision",
+  "neurologic",
+  "alzheimer",
+  "cognitive",
+  "pcs",
+  "endocrine",
+]
+
+const normalize = row => {
+  const injuryDate      = Date.parse(row.injuryDate)
+  const encounterDate   = Date.parse(row.encounterDate)
+  const daysSinceInjury = parseInt(row.daysSinceInjury)
+
+  assert.equal((encounterDate - injuryDate) / (1000 * 60 * 60 * 24), daysSinceInjury)
+
+  return {
+    id     : row.id,
+    gender : normalizeGender(row),
+    injury : {
+      age        : parseInt(row.ageInjury),
+      date       : injuryDate,
+      type       : row.injuryType,
+      warRelated : normalizeFlag(row.warRelated),
+    },
+    encounters : [assign(
+      {
+        id                : row.encounterId,
+        age               : parseInt(row.age),
+        date              : encounterDate,
+        daysSinceInjury   : daysSinceInjury,
+        source            : row.encounterSource,
+        providerSpecialty : row.providerSpecialty,
+        providerType      : row.providerType,
+        productLine       : row.productLine,
+        injuryEncounter   : normalizeFlag(row.injuryEncounter),
+        nonSkullInjury    : normalizeFlag(row.nonSkullInjury),
+        skullInjury       : normalizeFlag(row.skullInjury),
+      },
+      fromPairs(symptoms.map(s => [s, normalizeFlag(row[s])]))
+    )],
+  }
+}
+
+const tbiEncounterIndex = encounters => findIndex(encounters, ({ daysSinceInjury }) => daysSinceInjury >= 0)
+
+// Reorganize the data
+const constantMerge = (patient, row, field) => {
+  if (isNull(patient[field])) return row[field]
+  if (isNull(row[field]))     return patient[field]
+  assert.deepEqual(row[field], patient[field], `Field ${field} is not constant for ${row.id}: ${patient[field]} -> ${row[field]}`)
+  return patient[field]
+}
+
+const merge = (patient, row) => {
+  if (!patient) return row
+  return {
+    id         : patient.id,
+    gender     : constantMerge(patient, row, "gender"),
+    injury     : constantMerge(patient, row, "injury"),
+    encounters : [ ...patient.encounters, ...row.encounters ],
+  }
+}
+
+const data = flow(
+  // Reorganize rows of encounters into a set of patient records
+  rows => assignWith(...rows.map(r => ({ [r.id] : normalize(r) })), merge),
+
+  // Sort the encounters
+  data => mapValues(data, v => assign(v, { encounters : sortBy(v.encounters, e => e.date) })),
+
+  // Just keep the values, sorted by age at injury
+  data => values(data).sort((a, b) => a.injury.age - b.injury.age),
+
+  // Add encounter index with respect to first encounter from TBI
+  data => data.map(patient => assign(patient, { encounters : patient.encounters.map((e, i) => assign(e, { i : i - tbiEncounterIndex(patient.encounters) })) })),
+
+  // Add symptoms list for patient
+  data => data.map(patient => assign(patient, { symptoms : symptoms.filter(s => some(patient.encounters, e => e[s])) }))
+
+)(rows)
+
+console.info(JSON.stringify(data, undefined, 2))
