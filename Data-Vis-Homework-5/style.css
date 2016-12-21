@@ -1,0 +1,16 @@
+body {
+  margin   : 0;
+  padding  : 0;
+  overflow : hidden;
+}
+
+body, text {
+  font-family           : "Fira Sans", sans-serif;
+  font-feature-settings : "onum" 1, "tnum" 1;
+}
+
+text {
+  fill        : #333;
+  font-size   : 12px;
+  user-select : none;
+}
